@@ -14,3 +14,6 @@ Index, middle, ring and pinky up to scroll down
 Controls your minecraft character
 Index finger on your right hand controls the way you look
 Left hand controls all other controls. Soon to be added
+
+#Fruit Ninja
+Lift your index finger up and your cursor will follow it. Use this to cut fruits!
