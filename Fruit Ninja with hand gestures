@@ -1,0 +1,53 @@
+import cv2
+import mediapipe as mp
+from pyautogui import size, dragTo
+import math
+
+mp_hands = mp.solutions.hands
+mp_drawing = mp.solutions.drawing_utils
+width, height = size()
+hands = mp_hands.Hands(static_image_mode=False, max_num_hands=1, min_detection_confidence=0.5, min_tracking_confidence=0.5)
+cap = cv2.VideoCapture(0)
+#Change below values based on computer performance
+CURSOR_SPEED = 500
+CURSOR_DURATION = 0.01
+
+prev_tip_position = None
+
+def calculate_distance(point1, point2):
+    return math.sqrt((point2[0] - point1[0])**2 + (point2[1] - point1[1])**2)
+
+def move_cursor_with_finger(index_tip):
+    global prev_tip_position
+
+    if prev_tip_position is not None:
+        distance = calculate_distance(prev_tip_position, index_tip)
+        speed_adjusted_duration = CURSOR_DURATION * distance / CURSOR_SPEED
+        x = int(index_tip[0] * width)
+        y = int(index_tip[1] * height)
+        dragTo(x, y, duration=speed_adjusted_duration)
+
+    prev_tip_position = index_tip
+
+while cap.isOpened():
+    ret, frame = cap.read()
+    frame = cv2.flip(frame, 1)
+    if not ret:
+        break
+
+    image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    results = hands.process(image_rgb)
+
+    if results.multi_hand_landmarks:
+        for hand_landmarks in results.multi_hand_landmarks:
+            mp_drawing.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+            index_tip = [hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].x,
+                         hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].y]
+            move_cursor_with_finger(index_tip)
+
+    cv2.imshow('MediaPipe Hands', frame)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+cap.release()
+cv2.destroyAllWindows()
