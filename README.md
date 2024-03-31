@@ -17,6 +17,7 @@ Left hand controls all other controls.
 I'm adding more gestures to move your character and fully play the game.
 IMPORTANT: Might not work in some versions due to backend issues. Works in Java edition, maybe in Bedrock edition
 I'll try to figure out ways so that you can play in any version.
+Lot's of comments and more to come!
 
 #Fruit Ninja
 Lift your index finger up and your cursor will follow it. Use this to cut fruits!
