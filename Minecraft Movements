@@ -1,0 +1,100 @@
+import cv2
+import mediapipe as mp
+import pyautogui
+import math
+import numpy as np
+
+mp_hands = mp.solutions.hands
+mp_drawing = mp.solutions.drawing_utils
+
+hands = mp_hands.Hands(static_image_mode=False, max_num_hands=1, min_detection_confidence=0.5, min_tracking_confidence=0.5)
+cap = cv2.VideoCapture(0)
+
+def ease_in_out_cubic(t):
+    t *= 2
+    if t < 1:
+        return 0.5 * t ** 3
+    t -= 2
+    return 0.5 * (t ** 3 + 2)
+
+def simulate_mouse_movement(hand_landmarks, frame):
+    screen_width, screen_height = pyautogui.size()
+
+    frame_height, frame_width, _ = frame.shape
+
+    # Dead zone parameters
+    dead_zone_width_percentage = 40  # Change when needed
+    dead_zone_height_percentage = 40  # Change when needed
+
+    max_angle_up = 45  # Change
+
+    index_tip = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP]
+    index_x = index_tip.x * frame_width
+    index_y = index_tip.y * frame_height
+
+    # Mapping
+    target_x = int(index_x * screen_width / frame_width)
+    target_y = int(index_y * screen_height / frame_height)
+
+    # Dead zone bonudaries
+    dead_zone_width = screen_width * dead_zone_width_percentage / 100
+    dead_zone_height = screen_height * dead_zone_height_percentage / 100
+
+    # Check if the finger is in the dead zone
+    if screen_width / 2 - dead_zone_width / 2 <= target_x <= screen_width / 2 + dead_zone_width / 2 \
+            and screen_height / 2 - dead_zone_height / 2 <= target_y <= screen_height / 2 + dead_zone_height / 2:
+        return #If is, don't move
+
+    # Calculate the angle between the finger position and the center of the screen
+    angle_rad = math.atan2(screen_height / 2 - target_y, target_x - screen_width / 2)
+    #angle_deg = math.degrees(angle_rad)
+
+    # Calculate the distance from the finger to the center of the screen
+    distance = math.sqrt((screen_height / 2 - target_y) ** 2 + (target_x - screen_width / 2) ** 2)
+
+    normalized_distance = min(distance, min(screen_width, screen_height) / 2)
+
+    # Movement speed based on the distance from the center of the screen
+    speed_multiplier = normalized_distance / (min(screen_width, screen_height) / 2)
+
+    # Horizontal and vertical movement based on the angle
+    angle_up = max_angle_up * speed_multiplier * math.sin(angle_rad)
+    angle_horizontal = max_angle_up * speed_multiplier * math.cos(angle_rad)
+
+    angle_up = min(angle_up, max_angle_up)  # Limit for how far up the character can look
+    angle_horizontal = min(max(angle_horizontal, -max_angle_up), max_angle_up)  # Limit horizontal angle
+
+    current_x, current_y = pyautogui.position()
+    target_x = current_x + angle_horizontal * 5  # Increase speed
+    target_y = current_y - angle_up * 5  # Increase speed
+    steps = 10  # More steps = smoother but less speed
+    easing_values = [ease_in_out_cubic(i / steps) for i in range(steps)]
+    
+    for i in range(steps):
+        eased_x = current_x + (target_x - current_x) * easing_values[i]
+        eased_y = current_y + (target_y - current_y) * easing_values[i]
+        pyautogui.moveTo(int(eased_x), int(eased_y), duration=0)  # Move mouse without animation
+
+while cap.isOpened():
+    ret, frame = cap.read()
+
+    frame = cv2.flip(frame, 1)
+
+    if not ret: break
+
+    image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    results = hands.process(image_rgb)
+
+    if results.multi_hand_landmarks:
+        for hand_landmarks in results.multi_hand_landmarks:
+            mp_drawing.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+
+            simulate_mouse_movement(hand_landmarks, frame)
+
+    cv2.imshow('MediaPipe Hands', frame)
+
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+cap.release()
+cv2.destroyAllWindows()
