@@ -1,4 +1,5 @@
 #README
+All code is preset to webcam on your computer.
 
 #hand_Mouse
 This code tracks your hand and with it, controls your cursor on the screen
@@ -11,9 +12,11 @@ Index, middle and ring fingers up scrolls up
 Index, middle, ring and pinky up to scroll down
 
 #minecraft_Movements
-Controls your minecraft character
-Index finger on your right hand controls the way you look
-Left hand controls all other controls. Soon to be added
+Lift only index finger on your right hand to control the way you look
+Left hand controls all other controls.
+I'm adding more gestures to move your character and fully play the game.
+IMPORTANT: Might not work in some versions due to backend issues. Works in Java edition, maybe in Bedrock edition
+I'll try to figure out ways so that you can play in any version.
 
 #Fruit Ninja
 Lift your index finger up and your cursor will follow it. Use this to cut fruits!
