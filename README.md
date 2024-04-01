@@ -1,6 +1,6 @@
 #README
 All code is preset to webcam on your computer.
-
+Press "q" in any code to exit
 #hand_Mouse
 This code tracks your hand and with it, controls your cursor on the screen
 The code is made in Python
@@ -21,3 +21,6 @@ Lot's of comments and more to come!
 
 #Fruit Ninja
 Lift your index finger up and your cursor will follow it. Use this to cut fruits!
+
+#GeneralDetection
+Detects hands and body
