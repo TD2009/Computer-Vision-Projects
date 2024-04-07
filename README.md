@@ -25,3 +25,9 @@ Lift your index finger up and your cursor will follow it. Use this to cut fruits
 
 #GeneralDetection
 Detects hands and body
+
+#Rep Counter
+Counts the amount of reps of a workout of your choice
+So far only 2 workouts possible: Forearm curls and lateral raises
+Shows the amount of reps per arm
+"q" to quit the code
