@@ -14,6 +14,7 @@ Thumb and index finger have to touch to click on the screen
 Index, middle and ring fingers up scrolls up
 Index, middle, ring and pinky up to scroll down
 
+
 #minecraft_Movements
 
 Lift only index finger on your right hand to control the way you look
@@ -23,13 +24,16 @@ IMPORTANT: Might not work in some versions due to backend issues. Works in Java 
 I'll try to figure out ways so that you can play in any version.
 Lot's of comments and more to come!
 
+
 #Fruit Ninja
 
 Lift your index finger up and your cursor will follow it. Use this to cut fruits!
 
+
 #GeneralDetection
 
 Detects hands and body
+
 
 #Rep Counter
 
