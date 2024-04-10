@@ -1,6 +1,7 @@
 import cv2
 import mediapipe as mp
 import pyautogui
+import keyboard
 
 mp_hands = mp.solutions.hands.HandLandmark
 width, height = pyautogui.size()
@@ -45,17 +46,17 @@ while cap.isOpened():
         middle_finger_mcp = hand_landmarks.landmark[mp_hands.MIDDLE_FINGER_MCP]
         wrist = hand_landmarks.landmark[mp_hands.WRIST]
 
-        if extended(index_finger_tip, index_finger_mcp, wrist) and extended(middle_finger_tip, middle_finger_mcp, wrist):
-            pyautogui.mouseDown(button="left")
-        else:
-            pyautogui.mouseUp(button="left")
-            
-        cx, cy = int(index_finger_tip.x * width), int(index_finger_tip.y * height)
+        if extended(index_finger_tip, index_finger_mcp, wrist):
+            if extended(middle_finger_tip, middle_finger_mcp, wrist):
+                pyautogui.mouseDown(button="left")
+            else:
+                pyautogui.mouseUp(button="left")
+            cx, cy = int(index_finger_tip.x * width), int(index_finger_tip.y * height)
         
-        # Move cursor to index finger coordinates
-        pyautogui.moveTo(cx, cy, duration=0)
+            pyautogui.moveTo(cx, cy, duration=0)
+                
 
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+    if keyboard.is_pressed('q'):
         break
 
 cap.release()
