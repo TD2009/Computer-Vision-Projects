@@ -1,7 +1,7 @@
 import cv2
 import mediapipe as mp
 import time
-from pyautogui import scroll
+import pyautogui
 import keyboard
 
 mp_hands = mp.solutions.hands
