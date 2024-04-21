@@ -50,7 +50,7 @@ Make sure the data has the same background in every image you take for maximum a
 Press the spacebar to take a screenshot and "q" to exit
 Works in conjunction with CustomComputerVisionModelMaker and ModelUser
 
-#Custom Computer Vision Model Maker
+#CustomComputerVisionModelMaker
 
 Second of 3 codes to make and use a custom computer vision model.
 This code makes a custom model that you can use to identify something of your choice.
