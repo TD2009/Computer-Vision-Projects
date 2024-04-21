@@ -42,6 +42,24 @@ So far only 2 workouts possible: Forearm curls and lateral raises
 Shows the amount of reps per arm
 "q" to quit the code
 
+#PictureTakingCodeForAI
+
+First of 3 codes to make and use a custom computer vision model.
+Can take pictures of your screen or webcam and save them to a file.
+Make sure the data has the same background in every image you take for maximum accuracy!
+Press the spacebar to take a screenshot and "q" to exit
+Works in conjunction with CustomComputerVisionModelMaker and ModelUser
+
 #Custom Computer Vision Model Maker
 
-This code makes a custom model that you can use to identify anything. Make sure the data has the same background in every image you take for maximum accuracy!
+Second of 3 codes to make and use a custom computer vision model.
+This code makes a custom model that you can use to identify something of your choice.
+Works in conjunction with PictureTakingCodeForAI and ModelUser
+Too high of a accuracy can lead to over training which means it might not be able to adapt. Preferred accuracy is 80-95!
+
+#ModelUser
+
+Third of 3 codes to make and use a custom computer vision model.
+Give the path to the model you made with the second code.
+Recognizes through screen or webcam with the model
+Press the spacebar when recognizing through screen
