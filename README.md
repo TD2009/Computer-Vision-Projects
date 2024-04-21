@@ -41,3 +41,7 @@ Counts the amount of reps of a workout of your choice
 So far only 2 workouts possible: Forearm curls and lateral raises
 Shows the amount of reps per arm
 "q" to quit the code
+
+#Custom Computer Vision Model Maker
+
+This code makes a custom model that you can use to identify anything. Make sure the data has the same background in every image you take for maximum accuracy!
