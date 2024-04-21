@@ -1,0 +1,57 @@
+import cv2
+import keyboard
+from PIL import ImageGrab
+import os
+import numpy as np
+import random
+
+destination_file = input("Enter the path to your dataset file: ")
+while not os.path.isdir(destination_file):
+    print("Directory does not exist. Make sure the file exists within the folder.")
+    destination_file = input("Enter the path to your dataset file: ")
+     
+def webcam():
+    x = random.randint(1,100)
+    cap = cv2.VideoCapture(0)
+    if not cap.isOpened():
+        exit()
+    imagesTaken = 0
+
+    while cap.isOpened():
+        if keyboard.is_pressed("space"):
+            imagesTaken += 1
+            ret, frame = cap.read()
+            cv2.imshow("Webcam",frame)
+            try:
+                cv2.imwrite(os.path.join(destination_file, f"image",x,"_{imagesTaken}.jpg"), frame.copy())
+                print("Photo taken")
+            except FileNotFoundError:
+                print("Folder doesn't exist, please check path.")
+                break
+        if keyboard.is_pressed("q"):
+            break
+
+    cap.release()
+
+def screen():
+    x = random.randint(1,100)
+    imagesTaken = 0
+    while True:
+        if keyboard.is_pressed("space"):
+            imagesTaken += 1
+            screenshot = ImageGrab.grab()
+            screenshot_np = np.array(screenshot) #Changing to numpy array so there is no error
+            try:
+                cv2.imwrite(os.path.join(destination_file, f"image",x,"_{imagesTaken}.jpg"), screenshot_np)
+                print("Photo taken")
+            except FileNotFoundError:
+                print("Folder doesn't exist, please check path.")
+                break
+        if keyboard.is_pressed("q"):
+            break
+
+choice = input("1. Screen Pictures\n2. Webcam Photos\n: ")
+if choice == "1":
+    screen()
+else:
+    webcam()
