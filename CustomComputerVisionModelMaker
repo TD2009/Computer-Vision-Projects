@@ -1,0 +1,68 @@
+import os
+import numpy as np
+from PIL import Image
+from sklearn.preprocessing import LabelEncoder
+from tensorflow.keras import layers, models, optimizers
+from tensorflow.keras.utils import to_categorical
+
+dataset_path = input("Enter the path to your dataset folder: ")
+while not os.path.isdir(dataset_path):
+    print("Directory does not exist.")
+    dataset_path = input("Enter the path to your dataset folder: ")
+
+categories_input = input("Enter category names separated by comma. Enter the names of what they are in the file (e.g., Category1,Category2): ")
+category_names = [category.strip() for category in categories_input.split(',')]
+
+save_path = input("Enter the path to save the trained model (including filename and extension): ")
+
+image_data = []
+labels = []
+
+for category in category_names:
+    category_path = os.path.join(dataset_path, category)
+    if os.path.isdir(category_path):
+        for root, dirs, files in os.walk(category_path):
+            for filename in files:
+                if filename.endswith('.png') or filename.endswith('.jpg'):
+                    image_path = os.path.join(root, filename)
+                    image = Image.open(image_path)
+                    image = image.convert('L')
+                    image = image.resize((28, 28), Image.LANCZOS)
+                    image_array = np.array(image)
+                    image_array = image_array / 255.0
+                    image_data.append(image_array)
+                    labels.append(category)
+
+if not image_data or not labels:
+    print("No images found in the specified categories or wrong category names provided.")
+else:
+    image_data = np.array(image_data)
+    labels = np.array(labels)
+
+    label_encoder = LabelEncoder()
+    numerical_labels = label_encoder.fit_transform(labels)
+
+    one_hot_labels = to_categorical(numerical_labels)
+
+    image_data = image_data.astype('float32')
+
+    model = models.Sequential([
+        layers.Conv2D(32, (3, 3), activation='relu', input_shape=(28, 28, 1)),
+        layers.MaxPooling2D((2, 2)),
+        layers.Flatten(),
+        layers.Dense(128, activation='relu'),
+        layers.Dense(len(category_names), activation='softmax')
+    ])
+
+    custom_optimizer = optimizers.Adam(learning_rate=0.001)
+
+    model.compile(optimizer=custom_optimizer,
+                  loss='categorical_crossentropy',
+                  metrics=['accuracy'])
+
+    history = model.fit(image_data, one_hot_labels, epochs=9, batch_size=16, validation_split=0.2)
+
+    model.save(save_path)
+
+    train_accuracy = history.history['accuracy'][-1]
+    print(f'Training Accuracy: {train_accuracy:.4f}')
