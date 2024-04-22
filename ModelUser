@@ -17,30 +17,34 @@ category_names = [category.strip() for category in categories_input.split(',')]
 
 label_to_category = {i: category_names[i] for i in range(len(category_names))}
 
-model = load_model(model_path)
+model = load_model("C:/Tanish/AiTrainingData/ChessModels/TanishMonisha_model.h5")
 
 def predict_category(screenshot):
-    #Convert to gray
-    gray = cv2.cvtColor(screenshot, cv2.COLOR_BGR2GRAY)
-    #Reshape and resize into images the model can preprocess
-    resized = cv2.resize(gray, (28, 28), interpolation=cv2.INTER_AREA)
+    # Preprocess image for prediction
+    gray = cv2.cvtColor(screenshot, cv2.COLOR_BGR2GRAY) 
+    _, mask = cv2.threshold(gray, 240, 255, cv2.THRESH_BINARY)
+    mask = cv2.bitwise_not(mask)
+    mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)  # Convert mask to 3 channels for bitwise_and
+    preprocessed_image = cv2.bitwise_and(screenshot, mask)
+    resized = cv2.resize(preprocessed_image, (28, 28), interpolation=cv2.INTER_AREA)
     normalized = resized.astype('float32') / 255.0
-    reshaped = normalized.reshape((1, 28, 28, 1))
+    reshaped = normalized.reshape((1, 28, 28, 3))
 
-    #Predict the category
+    # Predict the category
     prediction = model.predict(reshaped)
 
-    #Get the highest probability category
+    # Get the highest probability category
     predicted_index = np.argmax(prediction)
 
-    #Get the category name from numerical label
+    # Get the category name from numerical label
     predicted_category_name = label_to_category[predicted_index]
 
-    #Get the probability of the predicted category
+    # Get the probability of the predicted category
     predicted_probability = prediction[0][predicted_index]
 
-    #Return the predicted category name and probability
+    # Return the predicted category name and probability
     return predicted_category_name, predicted_probability
+
 
 def screen():
     while True:
