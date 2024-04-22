@@ -3,7 +3,6 @@ import keyboard
 from PIL import ImageGrab
 import os
 import numpy as np
-import random
 
 destination_file = input("Enter the path to your dataset file: ")
 while not os.path.isdir(destination_file):
@@ -11,7 +10,6 @@ while not os.path.isdir(destination_file):
     destination_file = input("Enter the path to your dataset file: ")
      
 def webcam():
-    x = random.randint(1,100)
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         exit()
@@ -23,7 +21,7 @@ def webcam():
             ret, frame = cap.read()
             cv2.imshow("Webcam",frame)
             try:
-                cv2.imwrite(os.path.join(destination_file, f"image",x,"_{imagesTaken}.jpg"), frame.copy())
+                cv2.imwrite(os.path.join(destination_file, f"image_{imagesTaken}.jpg"), frame.copy())
                 print("Photo taken")
             except FileNotFoundError:
                 print("Folder doesn't exist, please check path.")
@@ -34,7 +32,6 @@ def webcam():
     cap.release()
 
 def screen():
-    x = random.randint(1,100)
     imagesTaken = 0
     while True:
         if keyboard.is_pressed("space"):
@@ -42,7 +39,7 @@ def screen():
             screenshot = ImageGrab.grab()
             screenshot_np = np.array(screenshot) #Changing to numpy array so there is no error
             try:
-                cv2.imwrite(os.path.join(destination_file, f"image",x,"_{imagesTaken}.jpg"), screenshot_np)
+                cv2.imwrite(os.path.join(destination_file, f"image_{imagesTaken}.jpg"), screenshot_np)
                 print("Photo taken")
             except FileNotFoundError:
                 print("Folder doesn't exist, please check path.")
