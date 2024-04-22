@@ -14,22 +14,23 @@ def webcam():
     if not cap.isOpened():
         exit()
     imagesTaken = 0
-
     while cap.isOpened():
+        ret, frame = cap.read()
+        cv2.imshow("Webcam",frame)
         if keyboard.is_pressed("space"):
             imagesTaken += 1
-            ret, frame = cap.read()
-            cv2.imshow("Webcam",frame)
+
             try:
                 cv2.imwrite(os.path.join(destination_file, f"image_{imagesTaken}.jpg"), frame.copy())
                 print("Photo taken")
             except FileNotFoundError:
                 print("Folder doesn't exist, please check path.")
                 break
-        if keyboard.is_pressed("q"):
+        if (cv2.waitKey(1) & 0xFF == ord('q')) or keyboard.is_pressed('q'):
             break
 
     cap.release()
+    cv2.destroyAllWindows()
 
 def screen():
     imagesTaken = 0
