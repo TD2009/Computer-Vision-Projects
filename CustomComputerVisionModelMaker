@@ -5,6 +5,7 @@ from sklearn.preprocessing import LabelEncoder
 from tensorflow.keras import layers, models, optimizers
 from tensorflow.keras.utils import to_categorical
 
+# Path to dataset folder and category names
 dataset_path = input("Enter the path to your dataset folder: ")
 while not os.path.isdir(dataset_path):
     print("Directory does not exist.")
@@ -15,9 +16,11 @@ category_names = [category.strip() for category in categories_input.split(',')]
 
 save_path = input("Enter the path to save the trained model (including filename and extension): ")
 
+# Initialize lists to store image data and labels
 image_data = []
 labels = []
 
+# Load images and labels from the dataset
 for category in category_names:
     category_path = os.path.join(dataset_path, category)
     if os.path.isdir(category_path):
@@ -26,28 +29,29 @@ for category in category_names:
                 if filename.endswith('.png') or filename.endswith('.jpg'):
                     image_path = os.path.join(root, filename)
                     image = Image.open(image_path)
-                    image = image.convert('L')
                     image = image.resize((28, 28), Image.LANCZOS)
                     image_array = np.array(image)
-                    image_array = image_array / 255.0
+                    image_array = image_array / 255.0  # Normalize to [0, 1]
                     image_data.append(image_array)
                     labels.append(category)
 
+# Check if any images were loaded
 if not image_data or not labels:
     print("No images found in the specified categories or wrong category names provided.")
 else:
     image_data = np.array(image_data)
     labels = np.array(labels)
 
+    # Convert labels to numerical format
     label_encoder = LabelEncoder()
     numerical_labels = label_encoder.fit_transform(labels)
 
+    # Convert numerical labels to one-hot encoding
     one_hot_labels = to_categorical(numerical_labels)
 
-    image_data = image_data.astype('float32')
-
+    # Create and compile the model
     model = models.Sequential([
-        layers.Conv2D(32, (3, 3), activation='relu', input_shape=(28, 28, 1)),
+        layers.Conv2D(32, (3, 3), activation='relu', input_shape=(28, 28, 3)),
         layers.MaxPooling2D((2, 2)),
         layers.Flatten(),
         layers.Dense(128, activation='relu'),
@@ -60,9 +64,12 @@ else:
                   loss='categorical_crossentropy',
                   metrics=['accuracy'])
 
+    # Train the model
     history = model.fit(image_data, one_hot_labels, epochs=9, batch_size=16, validation_split=0.2)
 
+    # Save the trained model
     model.save(save_path)
 
+    # Print training accuracy
     train_accuracy = history.history['accuracy'][-1]
     print(f'Training Accuracy: {train_accuracy:.4f}')
