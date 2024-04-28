@@ -63,3 +63,8 @@ Third of 3 codes to make and use a custom computer vision model.
 Give the path to the model you made with the second code.
 Recognizes through screen or webcam with the model
 Press the spacebar when recognizing through screen
+
+#ExactHandDirections
+
+Gives everything from which hand is being shown to the direction the hand is pointing to (Not fingers, entire fist), and the orientation of th palm compared to the camera. The text is shown in the popup.
+Text is black so may not be visible if the background is black.
