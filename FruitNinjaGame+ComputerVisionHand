@@ -1,0 +1,260 @@
+import random
+import cv2
+import mediapipe as mp
+import pyautogui
+import threading
+import time
+import pygame
+
+pygame.init()
+
+# Use display info to get screen size
+info = pygame.display.Info()
+WIDTH, HEIGHT = info.current_w, info.current_h
+window = pygame.display.set_mode((WIDTH, HEIGHT), pygame.FULLSCREEN)
+pygame.display.set_caption("Fruit Ninja")
+BG_COLOR = (46, 32, 25)
+TEXT_COLOR = (255, 255, 255)
+BUTTON_COLOR = (100, 100, 100)
+BUTTON_HOVER_COLOR = (150, 150, 150)
+
+score = 0
+FPS = 60  # Adjust FPS for performance
+
+# Load images and scale them
+FRUIT_WIDTH, FRUIT_HEIGHT = 150, 150  # Fruit size
+BOMB_WIDTH, BOMB_HEIGHT = 150, 150
+
+# Load fruit and bomb images
+STRAWBERRY = pygame.image.load("strawberry.png")
+APPLE = pygame.image.load("apple.png")
+BANANA = pygame.image.load("banana.png")
+COCONUT = pygame.image.load("coconut.png")
+PINEAPPLE = pygame.image.load("pineapple.png")
+WATERMELON = pygame.image.load("watermelon.png")
+BOMB = pygame.image.load("tnt.png")
+EXPLOSION = pygame.image.load("explosion.png")
+
+# Scale images
+FRUIT_IMAGES = [
+    pygame.transform.scale(img, (FRUIT_WIDTH, FRUIT_HEIGHT)) for img in
+    [STRAWBERRY, APPLE, BANANA, COCONUT, PINEAPPLE, WATERMELON, BOMB, EXPLOSION]
+]
+
+# Initialize hand tracking
+mp_hands = mp.solutions.hands.HandLandmark
+hands = mp.solutions.hands.Hands(
+    static_image_mode=False,
+    max_num_hands=1,
+    min_detection_confidence=0.5,
+    min_tracking_confidence=0.5
+)
+
+# Initialize video capture
+cap = cv2.VideoCapture(0)
+pyautogui.PAUSE = 0
+
+# Initialize font
+font = pygame.font.Font('freesansbold.ttf', 32)
+
+# Initialize button rectangles
+play_again_rect = pygame.Rect(WIDTH / 2 - 150, HEIGHT / 2 - 100, 300, 100)
+quit_rect = pygame.Rect(WIDTH / 2 - 150, HEIGHT / 2 + 100, 300, 100)
+
+def extended(finger_tip, finger_mcp, wrist):
+    x = finger_tip.y - wrist.y
+    y = finger_mcp.y - wrist.y
+    return x < y if x < 0 else x > y
+
+def create_fruit(index):
+    img = FRUIT_IMAGES[index]
+    is_bomb = img == BOMB
+    is_cut = False
+    x = random.uniform(0, WIDTH - FRUIT_WIDTH)
+    y = HEIGHT - FRUIT_HEIGHT
+    horizontal_speed = random.uniform(50, 100)  # Adjusted horizontal speed
+    vertical_speed = random.uniform(10, 20)     # Adjusted vertical speed
+    death_effect_counter = 60
+    if is_bomb:
+        horizontal_speed *= 1.5
+    direction = random.choice([-1, 1])
+    return {'img': img, 'is_bomb': is_bomb, 'is_cut': is_cut, 'x': x, 'y': y, 
+            'horizontal_speed': horizontal_speed, 'vertical_speed': vertical_speed, 
+            'death_effect_counter': death_effect_counter, 'direction': direction}
+
+def update_fruit(fruit):
+    if not fruit['is_cut']:
+        fruit['x'] += fruit['direction'] * fruit['horizontal_speed'] / FPS
+        fruit['y'] -= fruit['vertical_speed']
+        fruit['vertical_speed'] -= 0.1  # Gravity effect
+        if fruit['y'] >= HEIGHT - FRUIT_HEIGHT:
+            fruit['is_cut'] = True
+    else:
+        fruit['img'] = EXPLOSION
+        fruit['death_effect_counter'] -= 1
+
+def draw(gametime):
+    window.fill(BG_COLOR)
+    text = font.render(f'Score: {score}', True, TEXT_COLOR)
+    textRect = text.get_rect(center=(WIDTH / 2, 50))
+    window.blit(text, textRect)
+    time_left = max(0, gametime - int(time.time() - start_time))
+    timer_text = font.render(f'Time: {time_left}s', True, TEXT_COLOR)
+    timer_rect = timer_text.get_rect(center=(WIDTH / 2, 100))
+    window.blit(timer_text, timer_rect)
+
+    for fruit in fruit_objects:
+        if not fruit['is_cut'] or fruit['death_effect_counter'] > 0:
+            window.blit(fruit['img'], (fruit['x'], fruit['y']))
+            if fruit['is_cut']:
+                fruit['death_effect_counter'] -= 1
+    pygame.display.flip()
+
+def show_end_screen():
+    window.fill(BG_COLOR)
+    end_text = font.render(f'Final Score: {score}', True, TEXT_COLOR)
+    end_rect = end_text.get_rect(center=(WIDTH / 2, HEIGHT / 4))
+    window.blit(end_text, end_rect)
+
+    # Define button rectangles
+    play_again_rect = pygame.Rect(WIDTH / 2 - 150, HEIGHT / 2 - 100, 300, 100)
+    quit_rect = pygame.Rect(WIDTH / 2 - 150, HEIGHT / 2 + 100, 300, 100)
+
+    # Draw the interactive areas
+    pygame.draw.rect(window, BUTTON_COLOR, play_again_rect)
+    pygame.draw.rect(window, BUTTON_COLOR, quit_rect)
+
+    # Render button text
+    play_again_text = font.render("Play Again", True, TEXT_COLOR)
+    play_again_text_rect = play_again_text.get_rect(center=play_again_rect.center)
+    window.blit(play_again_text, play_again_text_rect)
+
+    quit_text = font.render("Quit", True, TEXT_COLOR)
+    quit_text_rect = quit_text.get_rect(center=quit_rect.center)
+    window.blit(quit_text, quit_text_rect)
+
+    pygame.display.flip()
+
+    # Return the coordinates of the cursor without changing cursor state
+    mouse_pos = pygame.mouse.get_pos()
+    if play_again_rect.collidepoint(mouse_pos):
+        return "play_again"
+    elif quit_rect.collidepoint(mouse_pos):
+        return "quit"
+    
+    return None
+
+def reset_game():
+    global score, fruit_objects, start_time
+    score = 0
+    fruit_objects = [create_fruit(random.randint(0, 5)) for _ in range(random.randint(3, 7))]
+    start_time = time.time()
+
+def vision_thread():
+    global run, game_over, cursor_coords
+
+    while run:
+        ret, frame = cap.read()
+        if not ret:
+            continue
+
+        frame = cv2.flip(frame, 1)
+        image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        results = hands.process(image_rgb)
+
+        if results.multi_hand_landmarks:
+            hand_landmarks = results.multi_hand_landmarks[0]
+
+            index_finger_tip = hand_landmarks.landmark[mp_hands.INDEX_FINGER_TIP]
+            index_finger_mcp = hand_landmarks.landmark[mp_hands.INDEX_FINGER_MCP]
+            wrist = hand_landmarks.landmark[mp_hands.WRIST]
+
+            if extended(index_finger_tip, index_finger_mcp, wrist):
+                # Check if the end screen is not shown before clicking
+                if not game_over:
+                    pyautogui.mouseDown(button="left")
+                else:
+                    pyautogui.mouseUp(button="left")
+            else:
+                pyautogui.mouseUp(button="left")
+            
+            cx, cy = int(index_finger_tip.x * WIDTH), int(index_finger_tip.y * HEIGHT)
+            pyautogui.moveTo(cx, cy, duration=0)
+
+            cursor_coords = (cx, cy)  # Always update cursor coordinates
+
+        time.sleep(0.01)  # Short delay to reduce CPU usage
+
+def main():
+    global run, fruit_objects, start_time, game_over, score
+
+    run = True
+    game_over = False
+    vision_thread_instance = threading.Thread(target=vision_thread, daemon=True)
+    vision_thread_instance.start()
+
+    reset_game()
+
+    gametime = 60
+
+    clock = pygame.time.Clock()
+
+    while run:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_q:
+                run = False
+            elif event.type == pygame.MOUSEBUTTONDOWN and game_over:
+                if play_again_rect.collidepoint(event.pos):
+                    reset_game()
+                    game_over = False
+                elif quit_rect.collidepoint(event.pos):
+                    run = False
+
+        if not game_over:
+            # Update game state
+            currentMousePos = pygame.mouse.get_pos()
+
+            # Detect fruit clicks
+            for fruit in fruit_objects:
+                if (
+                    fruit['x'] <= currentMousePos[0] <= fruit['x'] + FRUIT_WIDTH and
+                    fruit['y'] <= currentMousePos[1] <= fruit['y'] + FRUIT_HEIGHT
+                ):
+                    if not fruit['is_cut']:
+                        fruit['is_cut'] = True
+                        if fruit['is_bomb']:
+                            score = 0
+                        else:
+                            score += 1
+
+            fruit_objects = [fruit for fruit in fruit_objects if not fruit['is_cut'] or fruit['death_effect_counter'] > 0]
+            while len(fruit_objects) < random.randint(3, 7):
+                fruit_objects.append(create_fruit(random.randint(0, 5)))
+
+            draw(gametime)
+            for fruit in fruit_objects:
+                update_fruit(fruit)
+
+            if time.time() - start_time > gametime:
+                game_over = True
+
+        else:
+
+            action = show_end_screen()
+            if action == "play_again":
+                reset_game()
+                game_over = False
+            elif action == "quit":
+                run = False
+
+        clock.tick(FPS)
+
+    pygame.quit()
+    run = False
+    cap.release()
+    cv2.destroyAllWindows()
+
+if __name__ == "__main__":
+    main()
